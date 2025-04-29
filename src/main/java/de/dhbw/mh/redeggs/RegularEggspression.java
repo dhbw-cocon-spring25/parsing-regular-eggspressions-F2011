@@ -240,7 +240,7 @@ public abstract class RegularEggspression {
 	 * Represents the empty word (epsilon) in the regular expression.
 	 */
 	public static class EmptyWord extends RegularEggspression {
-		private EmptyWord() {
+		public EmptyWord() {
 			super();
 		}
 
@@ -254,7 +254,7 @@ public abstract class RegularEggspression {
 	 * Represents the empty set (no valid matches) in the regular expression.
 	 */
 	public static class EmptySet extends RegularEggspression {
-		private EmptySet() {
+		public EmptySet() {
 			super();
 		}
 
