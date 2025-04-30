@@ -30,131 +30,131 @@ import de.dhbw.mh.redeggs.RegularEggspression.Star;
  */
 public class RecursiveDescentRedeggsParserTest {
 
-	/**
-	 * A simple implementation of {@link VirtualSymbol} for testing. Holds a sorted
-	 * list of character ranges that represent the symbol.
-	 */
-	public static class TestableSymbol implements VirtualSymbol {
+    /**
+     * A simple implementation of {@link VirtualSymbol} for testing. Holds a sorted
+     * list of character ranges that represent the symbol.
+     */
+    public static class TestableSymbol implements VirtualSymbol {
 
-		/** List of character ranges representing the symbol. */
-		public final List<Range> ranges = new LinkedList<>();
+        /** List of character ranges representing the symbol. */
+        public final List<Range> ranges = new LinkedList<>();
 
-		/** Comparator for sorting ranges by their starting codepoint. */
-		private static final Comparator<Range> BY_FIRST_CODEPOINT = Comparator.comparingInt(r -> r.firstCodePoint);
+        /** Comparator for sorting ranges by their starting codepoint. */
+        private static final Comparator<Range> BY_FIRST_CODEPOINT = Comparator.comparingInt(r -> r.firstCodePoint);
 
-		/**
-		 * Constructs a new {@code TestableSymbol} with the given ranges.
-		 *
-		 * @param ranges character ranges to include in the symbol
-		 */
-		public TestableSymbol(List<Range> ranges) {
-			super();
-			this.ranges.addAll(ranges);
-			this.ranges.sort(BY_FIRST_CODEPOINT);
-		}
+        /**
+         * Constructs a new {@code TestableSymbol} with the given ranges.
+         *
+         * @param ranges character ranges to include in the symbol
+         */
+        public TestableSymbol(List<Range> ranges) {
+            super();
+            this.ranges.addAll(ranges);
+            this.ranges.sort(BY_FIRST_CODEPOINT);
+        }
 
-		@Override
-		public String toString() {
-			return ranges.stream().map(Object::toString).collect(Collectors.joining("", "[", "]"));
-		}
-	}
+        @Override
+        public String toString() {
+            return ranges.stream().map(Object::toString).collect(Collectors.joining("", "[", "]"));
+        }
+    }
 
-	/**
-	 * A test-specific implementation of {@link SymbolFactory} that builds
-	 * {@link TestableSymbol} instances.
-	 */
-	private final static SymbolFactory SYMBOL_FACTORY = new SymbolFactory() {
+    /**
+     * A test-specific implementation of {@link SymbolFactory} that builds
+     * {@link TestableSymbol} instances.
+     */
+    private final static SymbolFactory SYMBOL_FACTORY = new SymbolFactory() {
 
-		@Override
-		public Builder newSymbol() {
-			return new SymbolFactory.Builder() {
+        @Override
+        public Builder newSymbol() {
+            return new SymbolFactory.Builder() {
 
-				public List<Range> ranges = new LinkedList<>();
+                public List<Range> ranges = new LinkedList<>();
 
-				@Override
-				public Builder include(Range... extras) {
-					for (Range range : extras) {
-						ranges.add(range);
-					}
-					return this;
-				}
+                @Override
+                public Builder include(Range... extras) {
+                    for (Range range : extras) {
+                        ranges.add(range);
+                    }
+                    return this;
+                }
 
-				@Override
-				public Builder exclude(Range... extras) {
-					throw new RuntimeException("not yet supported");
-				}
+                @Override
+                public Builder exclude(Range... extras) {
+                    throw new RuntimeException("not yet supported");
+                }
 
-				@Override
-				public VirtualSymbol andNothingElse() {
-					return new TestableSymbol(ranges);
-				}
+                @Override
+                public VirtualSymbol andNothingElse() {
+                    return new TestableSymbol(ranges);
+                }
 
-			};
-		}
+            };
+        }
 
-	};
+    };
 
-	/** The parser under test. */
-	private final RecursiveDescentRedeggsParser parser = new RecursiveDescentRedeggsParser(SYMBOL_FACTORY);
+    /** The parser under test. */
+    private final RecursiveDescentRedeggsParser parser = new RecursiveDescentRedeggsParser(SYMBOL_FACTORY);
 
-	/** A node visitor used to inspect the regular expression tree. */
-	public static final NodeInspector INSPECTOR = new NodeInspector();
+    /** A node visitor used to inspect the regular expression tree. */
+    public static final NodeInspector INSPECTOR = new NodeInspector();
 
-	@Test
-	public void testDummy() throws Exception {
-		RegularEggspression expr = parser.parse("[_a-zA-Z]");
+    @Test
+    public void testDummy() throws Exception {
+        RegularEggspression expr = parser.parse("[_a-zA-Z]");
 
-		assertThat(expr).isInstanceOf(Literal.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo(SYMBOL_FACTORY.newSymbol()
-				.include(range('A', 'Z'), single('_'), range('a', 'z')).andNothingElse().toString());
-	}
+        assertThat(expr).isInstanceOf(Literal.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo(SYMBOL_FACTORY.newSymbol()
+                .include(range('A', 'Z'), single('_'), range('a', 'z')).andNothingElse().toString());
+    }
 
-	@Test
-	public void testLiteral() throws Exception {
-		RegularEggspression expr = parser.parse("a");
+    @Test
+    public void testLiteral() throws Exception {
+        RegularEggspression expr = parser.parse("a");
 
-		assertThat(expr).isInstanceOf(Literal.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("[\\u0097]");
-	}
+        assertThat(expr).isInstanceOf(Literal.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("[\\u0061]");
+    }
 
-	@Test
-	public void testConcatenation() throws Exception {
-		RegularEggspression expr = parser.parse("ab");
+    @Test
+    public void testConcatenation() throws Exception {
+        RegularEggspression expr = parser.parse("ab");
 
-		assertThat(expr).isInstanceOf(Concatenation.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0097][\\u0098])");
-	}
+        assertThat(expr).isInstanceOf(Concatenation.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0061][\\u0062])");
+    }
 
-	@Test
-	public void testAlternation() throws Exception {
-		RegularEggspression expr = parser.parse("a|b");
+    @Test
+    public void testAlternation() throws Exception {
+        RegularEggspression expr = parser.parse("a|b");
 
-		assertThat(expr).isInstanceOf(Alternation.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0097]|[\\u0098])");
-	}
+        assertThat(expr).isInstanceOf(Alternation.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0061]|[\\u0062])");
+    }
 
-	@Test
-	public void testStar() throws Exception {
-		RegularEggspression expr = parser.parse("a*");
+    @Test
+    public void testStar() throws Exception {
+        RegularEggspression expr = parser.parse("a*");
 
-		assertThat(expr).isInstanceOf(Star.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0097])*");
-	}
+        assertThat(expr).isInstanceOf(Star.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0061])*");
+    }
 
-	@Test
-	public void testEmptyWord() throws Exception {
-		RegularEggspression expr = parser.parse("ε");
+    @Test
+    public void testEmptyWord() throws Exception {
+        RegularEggspression expr = parser.parse("ε");
 
-		assertThat(expr).isInstanceOf(EmptyWord.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("ε");
-	}
+        assertThat(expr).isInstanceOf(EmptyWord.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("ε");
+    }
 
-	@Test
-	public void testEmptySet() throws Exception {
-		RegularEggspression expr = parser.parse("∅");
+    @Test
+    public void testEmptySet() throws Exception {
+        RegularEggspression expr = parser.parse("∅");
 
-		assertThat(expr).isInstanceOf(EmptySet.class);
-		assertThat(expr.accept(INSPECTOR)).isEqualTo("∅");
-	}
+        assertThat(expr).isInstanceOf(EmptySet.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("∅");
+    }
 
 }
