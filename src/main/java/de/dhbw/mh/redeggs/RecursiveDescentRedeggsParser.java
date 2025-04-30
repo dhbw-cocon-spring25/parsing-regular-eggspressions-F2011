@@ -159,7 +159,7 @@ public class RecursiveDescentRedeggsParser {
         char select = this.peek();
         if (isLiteral(select)) {
             this.consume();
-            VirtualSymbol symbol = symbolFactory.newSymbol().include(Range.single(select)).andNothingElse();
+            VirtualSymbol symbol = symbolFactory.newSymbol().include(CodePointRange.single(select)).andNothingElse();
             return new RegularEggspression.Literal(symbol);
         } else if (select == '(') {
             this.consume();
@@ -206,7 +206,7 @@ public class RecursiveDescentRedeggsParser {
         char select = this.peek();
         if (isLiteral(select)) {
             this.consume();
-            Range rest = rest(select);
+            CodePointRange rest = rest(select);
             if (negated) {
                 return builder.exclude(rest);
             } else {
@@ -217,14 +217,14 @@ public class RecursiveDescentRedeggsParser {
         throw new RedeggsParseException(regexString, 0);
     }
 
-    private Range rest(char start) throws RedeggsParseException {
+    private CodePointRange rest(char start) throws RedeggsParseException {
         char select = this.peek();
         if (select == '-') {
             this.consume();
             char lit = this.consume();
-            return Range.range(start, lit);
+            return CodePointRange.range(start, lit);
         } else if (isLiteral(select) || select == ']') {
-            return Range.single(start);
+            return CodePointRange.single(start);
         }
 
         throw new RedeggsParseException(regexString, 0);
