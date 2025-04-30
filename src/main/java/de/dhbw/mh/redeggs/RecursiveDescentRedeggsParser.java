@@ -11,6 +11,7 @@ import java.util.Arrays;
  */
 public class RecursiveDescentRedeggsParser {
     private String regexString;
+    private int position = 1;
     private static final char ENDOFSTRING = '\3';
     private static final Character[] SPECIAL_CHARACTERS = new Character[] { '(', ')', '[', ']', '|', '*', '^',
             ENDOFSTRING };
@@ -42,11 +43,13 @@ public class RecursiveDescentRedeggsParser {
         char r = this.peek();
         if (r != ENDOFSTRING) {
             this.regexString = this.regexString.substring(1);
+            position++;
         }
+        System.out.println(r);
         return r;
     }
 
-    private boolean isLiteral(char c) {
+    public boolean isLiteral(char c) {
         return !SPECIAL_CHARACTERS_SET.contains(c);
     }
 
@@ -74,7 +77,12 @@ public class RecursiveDescentRedeggsParser {
             }
         }
 
-        return regex();
+        RegularEggspression regexpression = regex();
+        if (this.peek() != ENDOFSTRING) {
+            throw new RedeggsParseException("Unexpected symbol '" + this.peek() + "' at position " + position + ".",
+                    position);
+        }
+        return regexpression;
         // TODO: Implement the recursive descent parsing to convert `regex` into an AST.
         // This is a placeholder implementation to demonstrate how to create a symbol.
 
@@ -94,7 +102,7 @@ public class RecursiveDescentRedeggsParser {
             return union(concat);
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression union(RegularEggspression left) throws RedeggsParseException {
@@ -107,7 +115,7 @@ public class RecursiveDescentRedeggsParser {
             return left;
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression concat() throws RedeggsParseException {
@@ -117,7 +125,7 @@ public class RecursiveDescentRedeggsParser {
             return suffix(kleene);
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression suffix(RegularEggspression left) throws RedeggsParseException {
@@ -129,7 +137,7 @@ public class RecursiveDescentRedeggsParser {
             return left;
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression kleene() throws RedeggsParseException {
@@ -139,7 +147,7 @@ public class RecursiveDescentRedeggsParser {
             return star(base);
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression star(RegularEggspression base) throws RedeggsParseException {
@@ -152,7 +160,7 @@ public class RecursiveDescentRedeggsParser {
             return base;
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private RegularEggspression base() throws RedeggsParseException {
@@ -164,18 +172,26 @@ public class RecursiveDescentRedeggsParser {
         } else if (select == '(') {
             this.consume();
             RegularEggspression regex = regex();
-            this.consume();
+            if (this.consume() != ')') {
+                throw new RedeggsParseException(
+                        "Input ended unexpectedly, expected symbol ')' at position " + position + ".",
+                        position);
+            }
             return regex;
         } else if (select == '[') {
             this.consume();
             boolean negation = negation();
             SymbolFactory.Builder inhalt = inhalt(symbolFactory.newSymbol(), negation);
             SymbolFactory.Builder rangeF = rangeF(inhalt, negation);
-            this.consume();
+            if (this.consume() != ']') {
+                throw new RedeggsParseException(
+                        "Input ended unexpectedly, expected symbol ']' at position " + position + ".",
+                        position);
+            }
             return new RegularEggspression.Literal(rangeF.andNothingElse());
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private boolean negation() throws RedeggsParseException {
@@ -187,7 +203,7 @@ public class RecursiveDescentRedeggsParser {
             return false;
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private SymbolFactory.Builder rangeF(SymbolFactory.Builder builder, boolean negated) throws RedeggsParseException {
@@ -199,7 +215,7 @@ public class RecursiveDescentRedeggsParser {
             return builder;
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private SymbolFactory.Builder inhalt(SymbolFactory.Builder builder, boolean negated) throws RedeggsParseException {
@@ -214,7 +230,7 @@ public class RecursiveDescentRedeggsParser {
             }
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 
     private CodePointRange rest(char start) throws RedeggsParseException {
@@ -227,6 +243,6 @@ public class RecursiveDescentRedeggsParser {
             return CodePointRange.single(start);
         }
 
-        throw new RedeggsParseException(regexString, 0);
+        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
     }
 }
