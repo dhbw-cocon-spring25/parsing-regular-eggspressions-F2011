@@ -1,0 +1,82 @@
+name: Autograding Tests
+'on':
+- push
+- workflow_dispatch
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Clone private grading repo
+      uses: actions/checkout@v4
+      with:
+        repository: marco-haupt/redeggs-grading
+        token: ${{ secrets.GRADING_TOKEN }}
+        path: grading-repo
+    - name: Replace grading test
+      run: |
+        mkdir -p src/test/java/de/dhbw/mh/redeggs/grading
+        rm -f src/test/java/de/dhbw/mh/redeggs/grading/GradingTest.java
+        cp grading-repo/GradingTest.java src/test/java/de/dhbw/mh/redeggs/grading/
+    - name: Parentheses
+      id: parentheses
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Parentheses
+        setup-command: ''
+        command: mvn test -Dgroups="parentheses"
+        timeout: 1
+        max-score: 1
+    - name: Edge Cases
+      id: edgecases
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Edge Cases
+        setup-command: ''
+        command: mvn test -Dgroups="edge-cases"
+        timeout: 1
+        max-score: 1
+    - name: Character Classes
+      id: charclasses
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Character Classes
+        setup-command: ''
+        command: mvn test -Dgroups="character-classes"
+        timeout: 1
+        max-score: 1
+    - name: Precedence
+      id: precedence
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Precedence
+        setup-command: ''
+        command: mvn test -Dgroups="precedence"
+        timeout: 1
+        max-score: 1
+    - name: Associativity
+      id: associativity
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Associativity
+        setup-command: ''
+        command: mvn test -Dgroups="associativity"
+        timeout: 1
+        max-score: 1
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        PARENTHESES_RESULTS: "${{steps.parentheses.outputs.result}}"
+        EDGECASES_RESULTS: "${{steps.edgecases.outputs.result}}"
+        CHARCLASSES_RESULTS: "${{steps.charclasses.outputs.result}}"
+        PRECEDENCE_RESULTS: "${{steps.precedence.outputs.result}}"
+        ASSOCIATIVITY_RESULTS: "${{steps.associativity.outputs.result}}"
+      with:
+        runners: parentheses,edgecases,charclasses,precedence,associativity

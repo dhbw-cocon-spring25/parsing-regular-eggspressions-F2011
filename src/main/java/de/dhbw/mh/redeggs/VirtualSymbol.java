@@ -1,5 +1,7 @@
 package de.dhbw.mh.redeggs;
 
+import java.util.List;
+
 /**
  * Represents a symbolic abstraction over a set of characters or character
  * classes in a regular expression.
@@ -23,5 +25,7 @@ package de.dhbw.mh.redeggs;
  * </p>
  */
 public interface VirtualSymbol {
+	
+	public List<CodePointRange> sortedCodePointRanges();
 
 }

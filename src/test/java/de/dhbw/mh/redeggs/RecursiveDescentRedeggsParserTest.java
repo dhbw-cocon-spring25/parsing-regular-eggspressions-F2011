@@ -1,8 +1,9 @@
 package de.dhbw.mh.redeggs;
 
-import static de.dhbw.mh.redeggs.Range.range;
-import static de.dhbw.mh.redeggs.Range.single;
+import static de.dhbw.mh.redeggs.CodePointRange.range;
+import static de.dhbw.mh.redeggs.CodePointRange.single;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -37,17 +38,18 @@ public class RecursiveDescentRedeggsParserTest {
     public static class TestableSymbol implements VirtualSymbol {
 
         /** List of character ranges representing the symbol. */
-        public final List<Range> ranges = new LinkedList<>();
+        public final List<CodePointRange> ranges = new LinkedList<>();
 
         /** Comparator for sorting ranges by their starting codepoint. */
-        private static final Comparator<Range> BY_FIRST_CODEPOINT = Comparator.comparingInt(r -> r.firstCodePoint);
+        private static final Comparator<CodePointRange> BY_FIRST_CODEPOINT = Comparator
+                .comparingInt(r -> r.firstCodePoint);
 
         /**
          * Constructs a new {@code TestableSymbol} with the given ranges.
          *
          * @param ranges character ranges to include in the symbol
          */
-        public TestableSymbol(List<Range> ranges) {
+        public TestableSymbol(List<CodePointRange> ranges) {
             super();
             this.ranges.addAll(ranges);
             this.ranges.sort(BY_FIRST_CODEPOINT);
@@ -56,6 +58,11 @@ public class RecursiveDescentRedeggsParserTest {
         @Override
         public String toString() {
             return ranges.stream().map(Object::toString).collect(Collectors.joining("", "[", "]"));
+        }
+
+        @Override
+        public List<CodePointRange> sortedCodePointRanges() {
+            return null;
         }
     }
 
@@ -69,18 +76,18 @@ public class RecursiveDescentRedeggsParserTest {
         public Builder newSymbol() {
             return new SymbolFactory.Builder() {
 
-                public List<Range> ranges = new LinkedList<>();
+                public List<CodePointRange> ranges = new LinkedList<>();
 
                 @Override
-                public Builder include(Range... extras) {
-                    for (Range range : extras) {
+                public Builder include(CodePointRange... extras) {
+                    for (CodePointRange range : extras) {
                         ranges.add(range);
                     }
                     return this;
                 }
 
                 @Override
-                public Builder exclude(Range... extras) {
+                public Builder exclude(CodePointRange... extras) {
                     throw new RuntimeException("not yet supported");
                 }
 
@@ -101,7 +108,7 @@ public class RecursiveDescentRedeggsParserTest {
     public static final NodeInspector INSPECTOR = new NodeInspector();
 
     @Test
-    public void testDummy() throws Exception {
+    public void testCharacterClass() throws Exception {
         RegularEggspression expr = parser.parse("[_a-zA-Z]");
 
         assertThat(expr).isInstanceOf(Literal.class);
@@ -155,6 +162,33 @@ public class RecursiveDescentRedeggsParserTest {
 
         assertThat(expr).isInstanceOf(EmptySet.class);
         assertThat(expr.accept(INSPECTOR)).isEqualTo("∅");
+    }
+
+    @Test
+    public void testParentheses() throws Exception {
+        RegularEggspression expr = parser.parse("a(b|c)");
+
+        assertThat(expr).isInstanceOf(Concatenation.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo("([\\u0061]([\\u0062]|[\\u0063]))");
+    }
+
+    @Test
+    public void missingRightParenThrowsException() throws RedeggsParseException {
+        String input = "((e)";
+
+        assertThatExceptionOfType(RedeggsParseException.class)
+                .as("Unbalanced parentheses should raise a RedeggsParseException.")
+                .isThrownBy(() -> parser.parse(input))
+                .withMessage("Input ended unexpectedly, expected symbol ')' at position 5.");
+    }
+
+    @Test
+    public void unbalancedRightParenThrowsException() {
+        String input = "((a)))";
+
+        assertThatExceptionOfType(RedeggsParseException.class)
+                .as("Unbalanced parentheses should raise a RedeggsParseException.")
+                .isThrownBy(() -> parser.parse(input)).withMessage("Unexpected symbol ')' at position 6.");
     }
 
 }

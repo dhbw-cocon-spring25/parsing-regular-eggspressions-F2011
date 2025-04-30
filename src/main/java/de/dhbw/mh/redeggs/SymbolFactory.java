@@ -25,7 +25,7 @@ public interface SymbolFactory {
 		 * @param ranges one or more character ranges to include
 		 * @return this builder instance for chaining
 		 */
-		public Builder include(Range... ranges);
+		public Builder include(CodePointRange... ranges);
 
 		/**
 		 * Excludes the given ranges from the symbol.
@@ -33,7 +33,7 @@ public interface SymbolFactory {
 		 * @param ranges one or more character ranges to exclude
 		 * @return this builder instance for chaining
 		 */
-		public Builder exclude(Range... ranges);
+		public Builder exclude(CodePointRange... ranges);
 
 		/**
 		 * Finalizes the symbol creation, allowing no characters outside the defined

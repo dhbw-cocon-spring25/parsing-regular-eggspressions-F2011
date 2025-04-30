@@ -4,7 +4,7 @@ package de.dhbw.mh.redeggs;
  * Represents a range of Unicode code points, inclusive.
  * Useful for character class definitions or lexical analysis.
  */
-public class Range {
+public class CodePointRange {
 
 	/**
 	 * The first code point in the range (inclusive).
@@ -22,9 +22,13 @@ public class Range {
 	 * @param firstCodePoint the starting code point (inclusive)
 	 * @param lastCodePoint  the ending code point (inclusive)
 	 */
-	public Range(int firstCodepoint, int lastCodepoint) {
+	public CodePointRange(int firstCodepoint, int lastCodepoint) {
 		firstCodePoint = firstCodepoint;
 		lastCodePoint = lastCodepoint;
+	}
+	
+	public int firstCodePoint() {
+		return firstCodePoint;
 	}
 
 	/**
@@ -34,8 +38,8 @@ public class Range {
 	 * @param lastCodePoint  the ending code point (inclusive)
 	 * @return a new {@code Range} instance
 	 */
-	public static Range range(int firstCodepoint, int lastCodepoint) {
-		return new Range(firstCodepoint, lastCodepoint);
+	public static CodePointRange range(int firstCodepoint, int lastCodepoint) {
+		return new CodePointRange(firstCodepoint, lastCodepoint);
 	}
 
 	/**
@@ -44,7 +48,7 @@ public class Range {
 	 * @param codePoint the code point to include
 	 * @return a {@code Range} containing only the given code point
 	 */
-	public static Range single(int codepoint) {
+	public static CodePointRange single(int codepoint) {
 		return range(codepoint, codepoint);
 	}
 
@@ -61,6 +65,16 @@ public class Range {
 			return String.format("\\u%04X", firstCodePoint);
 		}
 		return String.format("\\u%04X-\\u%04X", firstCodePoint, lastCodePoint);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		CodePointRange interval = (CodePointRange) o;
+		return firstCodePoint == interval.firstCodePoint && lastCodePoint == interval.lastCodePoint;
 	}
 
 }
