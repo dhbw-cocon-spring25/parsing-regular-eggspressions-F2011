@@ -238,6 +238,11 @@ public class RecursiveDescentRedeggsParser {
         if (select == '-') {
             this.consume();
             char lit = this.consume();
+            if (!isLiteral(lit)) {
+                throw new RedeggsParseException(
+                        "Input ended unexpectedly, expected literal at position " + position + ".",
+                        position);
+            }
             return CodePointRange.range(start, lit);
         } else if (isLiteral(select) || select == ']') {
             return CodePointRange.single(start);
