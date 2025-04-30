@@ -191,4 +191,19 @@ public class RecursiveDescentRedeggsParserTest {
                 .isThrownBy(() -> parser.parse(input)).withMessage("Unexpected symbol ')' at position 6.");
     }
 
+    @Test
+    public void randomTest() throws RedeggsParseException {
+        RegularEggspression expr = parser.parse("([0-9a-fA-F]|[Yyz+])*");
+
+        assertThat(expr).isInstanceOf(Star.class);
+        assertThat(expr.accept(INSPECTOR)).isEqualTo(
+                String.format(
+                        "((%s|%s))*",
+                        SYMBOL_FACTORY.newSymbol()
+                                .include(range('0', '9'), range('A', 'F'), range('a', 'f')).andNothingElse()
+                                .toString(),
+                        SYMBOL_FACTORY.newSymbol().include(single('Y'), single('y'), single('z'), single('+'))
+                                .andNothingElse().toString()));
+    }
+
 }
