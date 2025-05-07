@@ -53,6 +53,18 @@ public class RecursiveDescentRedeggsParser {
         return !SPECIAL_CHARACTERS_SET.contains(c);
     }
 
+    public boolean isSymbol(char c) {
+        boolean symb = false;
+        if (isLiteral(c)) {
+            symb = true;
+        }
+
+        if (c == '(' || c == ')' || c == '[' || c == '-' || c == '|') {
+            symb = true;
+        }
+        return symb;
+    }
+
     /**
      * Parses a regular expression string into an abstract syntax tree (AST).
      * 
@@ -83,16 +95,6 @@ public class RecursiveDescentRedeggsParser {
                     position);
         }
         return regexpression;
-        // TODO: Implement the recursive descent parsing to convert `regex` into an AST.
-        // This is a placeholder implementation to demonstrate how to create a symbol.
-
-        // Create a new symbol using the symbol factory
-        // VirtualSymbol symbol = symbolFactory.newSymbol()
-        // .include(single('_'), range('a', 'z'), range('A', 'Z'))
-        // .andNothingElse();
-
-        // // Return a dummy Literal RegularExpression for now
-        // return new RegularEggspression.Literal(symbol);
     }
 
     private RegularEggspression regex() throws RedeggsParseException {
@@ -110,7 +112,7 @@ public class RecursiveDescentRedeggsParser {
         if (select == '|') {
             this.consume();
             RegularEggspression concat = concat();
-            return new RegularEggspression.Alternation(left, union(concat));
+            return union(new RegularEggspression.Alternation(left, concat));
         } else if (select == ENDOFSTRING || select == ')') {
             return left;
         }
@@ -132,7 +134,7 @@ public class RecursiveDescentRedeggsParser {
         char select = this.peek();
         if (isLiteral(select) || select == '(' || select == '[') {
             RegularEggspression kleene = kleene();
-            return new RegularEggspression.Concatenation(left, suffix(kleene));
+            return suffix(new RegularEggspression.Concatenation(left, kleene));
         } else if (select == ENDOFSTRING || select == ')' || select == '|') {
             return left;
         }
@@ -189,6 +191,10 @@ public class RecursiveDescentRedeggsParser {
                         position);
             }
             return new RegularEggspression.Literal(rangeF.andNothingElse());
+        } else if (isSymbol(select)) {
+            this.consume();
+            VirtualSymbol symbol = symbolFactory.newSymbol().include(CodePointRange.single(select)).andNothingElse();
+            return new RegularEggspression.Literal(symbol);
         }
 
         throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
@@ -199,11 +205,12 @@ public class RecursiveDescentRedeggsParser {
         if (select == '^') {
             this.consume();
             return true;
-        } else if (isLiteral(select)) {
+        } else {
             return false;
         }
 
-        throw new RedeggsParseException("Unexpected symbol '" + select + "' at position " + position + ".", position);
+        // throw new RedeggsParseException("Unexpected symbol '" + select + "' at
+        // position " + position + ".", position);
     }
 
     private SymbolFactory.Builder rangeF(SymbolFactory.Builder builder, boolean negated) throws RedeggsParseException {
@@ -220,7 +227,7 @@ public class RecursiveDescentRedeggsParser {
 
     private SymbolFactory.Builder inhalt(SymbolFactory.Builder builder, boolean negated) throws RedeggsParseException {
         char select = this.peek();
-        if (isLiteral(select)) {
+        if (isSymbol(select)) {
             this.consume();
             CodePointRange rest = rest(select);
             if (negated) {
@@ -244,7 +251,7 @@ public class RecursiveDescentRedeggsParser {
                         position);
             }
             return CodePointRange.range(start, lit);
-        } else if (isLiteral(select) || select == ']') {
+        } else if (isSymbol(select) || select == ']') {
             return CodePointRange.single(start);
         }
 
